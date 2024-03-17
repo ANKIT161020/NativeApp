@@ -6,11 +6,13 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
 import app from "../Auth/Auth";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { getAuth, signOut } from "firebase/auth";
+import axios from "axios";
 
 const auth = getAuth(app);
 
@@ -23,6 +25,8 @@ const Home = ({ navigation }) => {
     longitude: 72.90786925130544,
   });
   const [showWelcome, setShowWelcome] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
   const userEmail = auth.currentUser ? auth.currentUser.email : "User";
   const HamburgerName = userEmail.charAt(0).toUpperCase();
 
@@ -52,6 +56,18 @@ const Home = ({ navigation }) => {
     setShowWelcome(!showWelcome);
   };
 
+  const handleSearch = async () => {
+    try {
+      const response = await axios.get(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
+      );
+      setResults(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <MapView
@@ -63,11 +79,23 @@ const Home = ({ navigation }) => {
           longitudeDelta: 0.0421,
         }}
       >
+        {results.length !== 0 &&
+          results.map((location, index) => (
+            <Marker
+              key={index}
+              coordinate={{
+                latitude: parseFloat(location.lat),
+                longitude: parseFloat(location.lon),
+              }}
+              title={location.display_name}
+            />
+          ))}
         <Marker
           coordinate={{
             latitude: location.latitude,
             longitude: location.longitude,
           }}
+          title="Your Location"
         />
       </MapView>
       {showWelcome && (
@@ -84,6 +112,15 @@ const Home = ({ navigation }) => {
       </TouchableOpacity>
       <TouchableOpacity style={styles.locationButton} onPress={getLocation}>
         <Text style={styles.toggleButtonText}>+</Text>
+      </TouchableOpacity>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search for a location"
+        value={query}
+        onChangeText={(text) => setQuery(text)}
+      />
+      <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+        <Text style={styles.buttonText}>Search</Text>
       </TouchableOpacity>
     </View>
   );
@@ -116,7 +153,7 @@ const styles = StyleSheet.create({
   },
   toggleButton: {
     position: "absolute",
-    top: 70,
+    top: 100,
     left: 20,
     backgroundColor: "grey",
     height: 60,
@@ -126,7 +163,7 @@ const styles = StyleSheet.create({
   },
   locationButton: {
     position: "absolute",
-    top: 150,
+    top: 180,
     left: 20,
     backgroundColor: "grey",
     height: 60,
@@ -140,6 +177,34 @@ const styles = StyleSheet.create({
     fontSize: 30,
     textAlign: "center",
     marginTop: 5,
+  },
+  searchInput: {
+    position: "absolute",
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 50,
+    width: 300,
+    height: 35,
+    fontSize: 16,
+    top: 50,
+    left: 5,
+    backgroundColor: "white",
+  },
+  searchButton: {
+    position: "absolute",
+    top: 50,
+    right: 5,
+    padding: 8,
+    backgroundColor: "grey",
+    borderRadius: 4,
+    width: 100,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
 
