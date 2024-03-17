@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { View, Image, StyleSheet } from "react-native";
-import Bg_Img from "../assets/icon.png";
+import Bg_Img from "../assets/logo.png";
 
 const OpeningPage = ({ navigation }) => {
   useEffect(() => {
